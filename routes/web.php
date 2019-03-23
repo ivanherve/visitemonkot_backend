@@ -17,5 +17,6 @@ $router->get('/', function () use ($router) {
 
 $router->post('/signin', 'AuthController@signIn');
 $router->post('/signout', 'AuthController@signOut');
+$router->post('/signup', 'AuthController@signUp');
 
 $router->get('/accomodations', 'AccomodationController@getAccomodations');

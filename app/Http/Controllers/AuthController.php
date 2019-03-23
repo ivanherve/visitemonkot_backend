@@ -6,6 +6,7 @@ use App\Token;
 use App\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -94,7 +95,7 @@ class AuthController extends Controller
                 return $this->jsonRes('error', 'This e-mail address already exist', 401);
             }
         }
-
+        /**/
         $createUser = User::create([
             'Firstname' => $request->input('firstname'),
             'Surname' => $request->input('surname'),
@@ -107,12 +108,12 @@ class AuthController extends Controller
         if(!$createUser){
             return $this->errorRes('Une erreur s\'est produite durant votre inscription',500);
         }
-/*
+
         // Server Mail
-        Mail::send('email.register', ['name' => $user->name], function ($msg) use ($user) {
-            $msg->to($user->email)->subject('Validation de votre inscription sur VisiteMonKot !');
+        Mail::send('email.contact', ['name' => $createUser->Firstname, 'surname' => $createUser->Surname, 'email' => $createUser->email], function ($msg) use ($createUser) {
+            $msg->to($createUser->email)->subject('Validation de votre inscription sur VisiteMonKot !');
         });
-        */
+
 
         return $this->jsonRes('success', $createUser, 200);
     }
