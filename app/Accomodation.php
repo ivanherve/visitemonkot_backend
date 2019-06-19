@@ -24,6 +24,7 @@ class Accomodation extends Model
     protected $fillable = [
         'accomodation_id',
         'Title',
+        'Address',
         'nbRoom',
         'priceRent',
         'priceCharges',
@@ -34,8 +35,13 @@ class Accomodation extends Model
         'HasCarPark',
         'HasFurnitures',
         'isStillFree',
-        'nbVisit',
         'PublicationDate',
         'Surface',
+        'Owner_user_id',
+        'City_city_id',
+        'TypeAccomodation_typeAcc_id',
+        'BeginingVisit',
+        'EndVisit',
+        'addressVisible'
     ];
 }

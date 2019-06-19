@@ -35,7 +35,7 @@ class AuthController extends Controller
             ->where("password", "=", $pswd)->first();
 
         if (!$user) {
-            return $this->jsonRes('error', [$pswd,$user,$request->input('email'),$request->input('password')], 401);
+            return $this->jsonRes('error', [$user,$request->input('email'),$request->input('password')], 401);
         }
 
         $userId = $user->user_id;
@@ -43,7 +43,7 @@ class AuthController extends Controller
         $tokenId = Token::all()->where('user_id','=', $userId)->where('api_token','=',null)->pluck('token_id')->first();
         if ($hasNotToken){
             $token = str_random(60);
-            $newToken = DB::select('UPDATE token SET api_token = \''.$token.'\' WHERE token_id = '.$tokenId.';');
+            $newToken = DB::update("call update_token('$token','$tokenId')");
             $newToken = Token::all()->where('user_id','=', $userId)->where('api_token','=',$token)->first();
             return $this->jsonRes('success',['user' => $user, 'token' => $newToken],200);
         }
@@ -95,12 +95,15 @@ class AuthController extends Controller
                 return $this->jsonRes('error', 'This e-mail address already exist', 401);
             }
         }
-        /**/
+        $firstname = $request->input('firstname'); if(!$firstname) $this->errorRes(['Quelle est votre prénom ?',$firstname],404);
+        $surname = $request->input('surname'); if(!$surname) $this->errorRes(['Quelle est votre Nom ?',$surname],404);
+        $email = $request->input('email'); if(!$email) $this->errorRes(['Quelle est votre adresse e-mail ?',$email],404);
+        $password = $request->input('password'); if(!$password) $this->errorRes(['Insérer un mot de passe svp ?',$password],404);
         $createUser = User::create([
-            'Firstname' => $request->input('firstname'),
-            'Surname' => $request->input('surname'),
-            'email' => $request->input('email'),
-            'password' => hash('sha256', $request->input('password')),
+            'Firstname' => $firstname,
+            'Surname' => $surname,
+            'email' => $email,
+            'password' => hash('sha256', $password),
             'isAccountActive' => 0,
             'Profil_profil_id' => 1,
         ]);
@@ -108,12 +111,12 @@ class AuthController extends Controller
         if(!$createUser){
             return $this->errorRes('Une erreur s\'est produite durant votre inscription',500);
         }
-
+/*
         // Server Mail
         Mail::send('email.contact', ['name' => $createUser->Firstname, 'surname' => $createUser->Surname, 'email' => $createUser->email], function ($msg) use ($createUser) {
             $msg->to($createUser->email)->subject('Validation de votre inscription sur VisiteMonKot !');
         });
-
+*/
 
         return $this->jsonRes('success', $createUser, 200);
     }
