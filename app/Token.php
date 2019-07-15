@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Token extends Model
 {
-    protected $table = 'Token';
+    protected $table = 'token';
     protected $primaryKey = 'token_id';
 
     /**
