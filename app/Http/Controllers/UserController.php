@@ -36,19 +36,18 @@ class UserController extends Controller
         $user = Auth::user();
         $password = $request->input('password');
 
-        if (hash('sha256',$password) != $user->password){
-            return $this->jsonRes('error', 'Ancien mot de passe incorrect',401);
-        }
+        $check = DB::select("call check_user('$password','$user->email')"); if(!$check) return $this->errorRes(["Ancien mot de passe incorrect"],401);
 
-        $newPassword = $request->input('newPassword');
-        $confirmPassword = $request->input('confPassword');
+        /**/
+        $newPassword = $request->input('newPassword'); if(!$newPassword) return $this->errorRes(["Veuillez entrer votre nouveau mot de passe"],404);
+        $confirmPassword = $request->input('confPassword'); if(!$confirmPassword) return $this->errorRes(["Veuillez confirmer votre nouveau mot de passe"],404);
         if ($newPassword != $confirmPassword){
             return $this->jsonRes('error','Les deux mots de passe ne sont pas identiques !',403);
         }
-        $user->update(['password' => hash('sha256',$newPassword)]);
-        if ($user->password != hash('sha256',$newPassword)){
-            return $this->jsonRes('error','password problem',400);
-        }
+
+        DB::update("call update_pwd('$newPassword',$user->user_id)");
+
         return $this->jsonRes('success',$user->Firstname.', votre mot de passe vient d\'être modifié.',200);
+
     }
 }
