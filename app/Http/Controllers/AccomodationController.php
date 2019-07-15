@@ -12,6 +12,8 @@ use App\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Moment\Moment;
 use function Sodium\add;
 
 class AccomodationController extends Controller
@@ -49,6 +51,12 @@ class AccomodationController extends Controller
 
         if(empty($accomodations)){
             return $this->errorRes(["There's no accomodations here",$accomodations],404);
+        }
+
+        foreach ($accomodations as $one) {
+            $pictures = DB::select("call get_pictures($one->accomodation_id)");
+            if(!$pictures) $one->pictures = null;
+            else $one->pictures = $pictures;
         }
 
         return $this->successRes($accomodations);
@@ -118,16 +126,7 @@ class AccomodationController extends Controller
         $address = $request->input('address'); if(!$address) return $this->errorRes(['Veuillez indiquer l\'adresse du logement svp ?',$address],404);
 //        $endVisit = $request->input('endVisit'); if(!$endVisit) return $this->errorRes(['Jusqu\'à quand organisez-vous les visites ?',$endVisit],404);
         $addressVisible = $request->input('addressVisible'); if(!$addressVisible) $addressVisible = 0;
-//        return response()->json($typeId);
 
-//        $file = $request->file('image');
-
-//        return $this->errorRes(['test',$file->getClientOriginalName()],404);
-
-//        if(!$file){
-//            return $this->errorRes(['Il n\'y a pas de photo',$file],404);
-//        }
-/**/
         $advertisment = Accomodation::create([
             'Title' => $title,
             'Address' => $address,
@@ -152,6 +151,14 @@ class AccomodationController extends Controller
 
         if(!$advertisment){
             return $this->errorRes(['L\'annonce n\'a pu être publié',$advertisment],404);
+        }
+
+        $images = $request->input('image'); if(!$images) return $this->errorRes(["Insérez des images",$images],404);
+
+        $images = json_decode($images);
+
+        for ($i = 0; $i < sizeof($images); $i++){
+            $insert = DB::insert("call insert_pictures('$images[$i]','$advertisment->accomodation_id')"); if(!$insert) return $this->errorRes(['Il y\'a eu un problème pour importer vos photos'],500);
         }
 
         $dates = [];
@@ -191,49 +198,29 @@ class AccomodationController extends Controller
     {
         $user = Auth::user();
         if(!$user) return $this->errorRes('Unauthorized',401);
-        // Check if there is a file
-//        if (!$request->hasFile('picture')) {
-//            //return $this->jsonRes('error', 'Il n\'y a pas de fichier ou alors cette image dépasse la limite de Mo possible',404);
-//        }
-        $file = $request->file('image');
 
-        return dd($request->file['image']);//response()->json($file->getClientOriginalName());
+        $aid = $request->input('aid'); if(!$aid) return $this->errorRes(["De quel logement s'agit-il ?", $aid],404);
+        $image = $request->input('image'); if(!$image) return $this->errorRes(["Insérez des images",$image],404);
 
-//        $file_ary = array();
-//        $file_count  = count([$request->file('image') ]);
-//        $a=($request->file('image'));
-//        $finalArray=array();
-//        $file_count;
-//        for ($i=0; $i<$file_count; $i++) {
-//            $fileName = time().$a[$i]->getClientOriginalName();
-//            $destinationPath = 'pictures/' ;
-//            $finalArray[$i]['image']=$destinationPath.$fileName;
-//            $a[$i]->move($destinationPath,$fileName);
+        $image = json_decode($image);
+
+        for ($i = 0; $i < sizeof($image); $i++){
+            DB::insert("call insert_pictures('$image[$i]','$aid')");
+        }
+
+//        $send = DB::insert("call insert_pictures('$image','$aid')");
 //
-//        }
-//        return json_encode($finalArray);  // it will return the upload path
+        return $this->successRes("Les images sont en bdd");
+    }
 
+    public function getImage()
+    {
+        $user = Auth::user();
+        if(!$user) return $this->errorRes('Unauthorized',401);
 
-        /*
+        $pic = Picture::all(); if(!$pic) return $this->errorRes(["Il n'y a pas de photos",$pic],404);
 
-                $name = time().$file->getClientOriginalName();
-
-                $wholeDir = 'pictures/';
-
-                if (!file_exists('../'.$wholeDir)){
-                    mkdir('../'.$wholeDir);
-                }
-
-                $file->move('../'.$wholeDir, $name);
-
-                $picture = Picture::create([
-                   'picPath' => $wholeDir.$name
-                ]);
-
-                if(!$picture) return $this->errorRes(['Une erreur s\'est produite', $picture],404);
-
-                return $this->successRes($picture);
-        */
+        return $this->successRes($pic);
     }
 
     public function editAd(Request $request)
@@ -299,22 +286,99 @@ class AccomodationController extends Controller
         $aid = $request->input('aid'); if(!$aid) return $this->errorRes(['De quelle logement il s\'agit ? '],404);
         $date = $request->input('date'); if(!$date) return $this->errorRes(["Veulliez choisir une date pour la visite svp"], 404);
         $time = $request->input('time'); if(!$time) return $this->errorRes(["A quelle heure la visite ?"], 404);
-        //$accomodation = Accomodation::all()->where('accomodation_id','=',$aid)->first(); if(!$accomodation) return $this->errorRes(['Ce logement n\'existe pas', $accomodation],404);
         $accomodation = DateVisit::all()->where('iddate_visit','=',$aid)->first(); if(!$accomodation) return $this->errorRes(['Ce logement n\'existe pas', $accomodation],404);
+        $acc = Accomodation::all()->where('accomodation_id','=',$accomodation->accomodation_id)->first(); if(!$acc) return $this->errorRes(['Ce logement n\'existe pas', $aid],404);
         if($accomodation->start_date > $date || ($accomodation->end_date < $date && $accomodation->end_date != null)) return $this->errorRes(["Veuillez choisir une date convenable svp",$date,$accomodation->start_date,$accomodation->end_date],401);
         if($accomodation->start_time > $time || ($accomodation->end_time <= $time && $accomodation->end_time != null)) {
             if(substr($accomodation->start_time,0,-3) != $time) return $this->errorRes(["Veuillez choisir une heure convenable svp",$time,substr($accomodation->start_time,0,-3),$accomodation->end_time, $accomodation->start_time == $time ? 'oui':'non', $aid],401);
         }
 
-        $date = $date.' '.$time.':00';
+        $date = $date.' '.$time.':00';/**/
         $check = DB::select("call check_visit('$user->user_id','$accomodation->accomodation_id')");
 
         if($check){
             return $this->errorRes(["Vous visitez déjà ce logement", $check],401);
         }
 
+        $owner = User::all()->where('user_id','=',$acc->Owner_user_id)->first();
+
+        Moment::setLocale('fr_FR');
+
+        $ownerName = $owner->Firstname;
+        $ownerSurname = $owner->Surname;
+
+        $moment = new Moment($date,'CET');
+        $email = 'he201342@students.ephec.be'; // $owner->email ;
+        $data = [
+            'ownerName' => $ownerName,
+            'ownerSurname' => $ownerSurname,
+            'visiterName' => $user->Firstname,
+            'visiterSurname' => $user->Surname,
+            'accomodation' => $acc->Title, // Request
+            'dateVisit' => $moment->format('l dS F Y à H:i'),
+        ];
+
         $visit = DB::insert("call visit_accomodation('$user->user_id','$accomodation->accomodation_id','$date');"); if(!$visit) return $this->errorRes(['Une erreur s\'est produite'],500);
+
+        Mail::send('email.confVisit', $data, function ($msg) use ($email) {
+            $msg->to($email)->subject('Demande de visite');
+        });
+
         return $this->successRes($date);
+//        return view('email.confVisit',$data);
+    }
+
+    public function confVisit(Request $request)
+    {
+        $user = Auth::user(); if(!$user) return $this->errorRes(['Unauthorized.'],404);
+
+        Moment::setLocale('fr_FR');
+
+        $visiter_id = $request->input('visiter_id'); if(!$visiter_id) return $this->errorRes(['De quelle demande s\'agit-il ?'],404);
+        $visiter = User::all()->where('user_id','=',$visiter_id)->first(); if(!$visiter) return $this->errorRes(['Cet utilisateur n\'existe pas'],404);
+
+        $aid = $request->input('aid'); if(!$aid) return $this->errorRes(["De quelle logement s'agit-il ?"],404);
+        $accommodation = Accomodation::all()->where('accomodation_id','=',$aid)->first(); if(!$accommodation) return $this->errorRes(['Ce logement n\'existe pas'],404);
+
+        $visit = DB::select("call get_one_visit($visiter_id,$aid)"); if(!$visit) return $this->errorRes(["Aucune demande de visite n'a été faite"],404);
+        $visit = $visit[0];
+        $date = $visit->visitDate;
+        $moment = new Moment($date,'CET');
+
+        $city = City::all()->where('city_id','=',$accommodation->City_city_id)->first();
+
+        DB::update("call approve_visit($visiter_id, $aid)");
+
+        $subject = 'Visite accepté';
+
+        $data = [
+            'headTitle' => $subject,
+            'title' => 'Votre demande de visite a été accepté',
+            'accomodation' => $accommodation->Title,
+            'visiter' => $visiter->Firstname.' '.$visiter->Surname,
+            'date' => $moment->format('l dS F Y à H:i'),
+            'address' => $accommodation->Address.', '.$city->cityName
+        ];
+
+        $email = 'he201342@students.ephec.be';//$visiter->email;
+
+        Mail::send('email.visitApproved', $data, function ($msg) use ($email, $subject) {
+            $msg->to($email)->subject($subject);
+        });
+
+        return $this->successRes('Visite Confirmé');
+    }
+
+    public function refuseVisit(Request $request)
+    {
+        $user = Auth::user(); if(!$user) return $this->errorRes(['Unauthorized.'],404);
+
+        $visiter_id = $request->input('visiter_id');
+        $aid = $request->input('aid');
+
+        DB::delete("call refuse_visit($visiter_id, $aid)");
+
+        return $this->successRes('Visite rejeté');
     }
 
     public function getVisits()
@@ -430,6 +494,84 @@ class AccomodationController extends Controller
         $del = DB::delete("call delete_one_vist($user->user_id, $accomo->accomodation_id)");
 
         return $this->successRes("La visite a été annulé");
+    }
+
+    public function sendMail()
+    {
+        $name = 'Test';
+        $surname = 'tst';
+        $data = [
+            'name' => $name,
+            'surname' => $surname,
+            'email' => 'tst@test.ts',
+            'msg' => 'This is a message. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+            'logo' => 'http://localhost:3000/static/media/vmk_v3_1.64902ba3.png'
+        ];
+/**/
+        Mail::send('email.contact', $data, function ($msg) use ($name, $surname) {
+            $msg->to('he201342@students.ephec.be')->subject('Message de '.$name.' '.$surname);
+        });
+
+        return $this->successRes('e-mail envoyé');
+
+//        return view('email.contact',$data);
+    }
+
+    public function visitIsConf()
+    {
+        $subject = 'Demande confirmé';
+        $data = [
+            'headTitle' => $subject,
+            'title' => 'Votre demande de visite a été approuvé',
+            'dateVisit' => '2019-07-04 12:00:00',
+            'visiter' => 'Alice Visiteur',
+            'owner' => 'Bob Annonceur',
+            'address' => '12/101 Rue René Magritte, Louvain-La-Neuve'
+        ];
+
+        return view('email.visitIsConf', $data);
+    }
+
+    public function visitIsComing()
+    {
+        $subject = 'Visite en approche';
+        $data = [
+            'headTitle' => $subject,
+            'title' => 'Une visite approche',
+            'names' => 'xxx yyy',
+            'dateVisit' => '2019-07-04 12:00:00',
+            'address' => '12/101 Rue René Magritte, Louvain-La-Neuve'
+        ];
+
+        return view('email.visitIsComing', $data);
+    }
+
+    public function visitIsEdited()
+    {
+        $subject = 'Modification de date de visite';
+        $data = [
+            'headTitle' => $subject,
+            'title' => 'Modification de date de visite',
+            'visiter' => 'Bob Visiteur',
+            'owner' => 'Alice Bailleur',
+            'accomodation' => 'Studio avec piscine',
+        ];
+
+        return view('email.visitIsEdited', $data);
+    }
+
+    public function feedbackVisit()
+    {
+        $subject = 'Feedback de la visite';
+
+        $data = [
+            'headTitle' => $subject,
+            'title' => 'Feedback de la visite',
+            'visiter' => 'Bob Visiteur',
+            'accomodation' => 'Studio avec piscine'
+        ];
+
+        return view('email.feedbackVisit',$data);
     }
 
 }
