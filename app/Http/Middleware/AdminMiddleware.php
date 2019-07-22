@@ -17,7 +17,7 @@ class AdminMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $token = Token::all()->where('api_token','=',$request->header('api_token'))->first();
+        $token = Token::all()->where('api_token','=',$request->header('Authorization'))->first();
         $user = User::all()->where('user_id','=',$token->user_id)->first();
         if($user->profil_id != 3){
             return response(['status'=>'error','response' => ['Unauthorized.']], 401);

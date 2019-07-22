@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Picture extends Model
 {
-    protected $table = 'Pictures';
+    protected $table = 'pictures';
     protected $primaryKey = 'picture_id';
 
     /**

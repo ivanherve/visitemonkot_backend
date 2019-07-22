@@ -62,7 +62,7 @@ class AuthController extends Controller
      */
     public function signOut(Request $request)
     {
-        $api_token = $request->header('api_token');
+        $api_token = $request->header('Authorization');
         $token = Token::all()->where('api_token', '=', $api_token)->first();
         $tokenId = Token::all()->where('api_token', '=', $api_token)->pluck('token_id')->first();
         if (!$token) {

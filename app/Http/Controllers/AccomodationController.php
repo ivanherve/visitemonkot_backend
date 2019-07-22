@@ -65,6 +65,8 @@ class AccomodationController extends Controller
     public function getAdvertisments()
     {
         $user = Auth::user();
+        //return $this->errorRes($user,404);
+        /**/
         $advertisment = DB::select('call get_advertisments('.$user->user_id.');');
 
         if(empty($advertisment)){
@@ -72,6 +74,7 @@ class AccomodationController extends Controller
         }
 
         return $this->successRes($advertisment);
+
     }
 
     public function getOneAdvertisment($id)
@@ -90,9 +93,9 @@ class AccomodationController extends Controller
 
     public function addOneAdvertisment(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::user(); if(!$user) return $this->errorRes(["Unauthorized."],404);
 
-        $title = $request->input('title'); if(empty($title)) return $this->errorRes(['entrer un titre',$title],404);
+        $title = $request->input('title'); if(!$title) return $this->errorRes(['entrez un titre',$title],404);
         $nbRoom = $request->input('nbRoom'); if(empty($nbRoom)) return $this->errorRes(['combien de chambre y a t-il ?',$nbRoom],404);
         $priceRent = $request->input('priceRent'); if(empty($priceRent)) return $this->errorRes(['Combien le loyer ?',$priceRent],404);
         $priceCharges = $request->input('priceCharges'); if(empty($priceCharges)) $priceCharges = 0;
@@ -572,6 +575,11 @@ class AccomodationController extends Controller
         ];
 
         return view('email.feedbackVisit',$data);
+    }
+
+    public function like_accomodation(Request $request)
+    {
+
     }
 
 }

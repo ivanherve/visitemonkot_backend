@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Profile extends Model
 {
-    protected $table = 'Profil';
+    protected $table = 'profil';
     protected $primaryKey = 'profil_id';
 
     /**
