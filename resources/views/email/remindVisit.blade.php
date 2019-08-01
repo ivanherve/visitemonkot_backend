@@ -6,6 +6,7 @@
         <title>{{$headTitle}}</title>
         <script src="https://momentjs.com/downloads/moment-with-locales.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
     </head>
     <body>
     <div id="mailsub" class="notification" align="center">
@@ -86,17 +87,38 @@
                                             <div style="line-height: 24px;">
                                                 <font face="Arial, Helvetica, sans-serif" size="4" color="#57697e" style="font-size: 15px;">
                     <span id="main" style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #57697e;">
-                        <p>Cher/Chère {{$visiter}},</p>
-                        <p>Nous voulons vous signalez que {{$owner}} a modifié ses dates de visite pour {{$accomodation}} et que votre date de visite a été affecté.</p>
-                        <p>Nous vous invitons donc à <a href='https://visitemonkot.be/login'>vous connecter</a> pour ainsi fixer une nouvelle date de visite.</p>
-                        <p>L'équipe VisiteMonKot</p>
+                        <p>Cher/Chère {{$recipient}},</p>
+                        <p>Nous tenons à vous rappelez qu'une visite approche, vous y trouverez les détails ci-dessous.</p>
+                        <table style="border: 1px solid black; border-collapse: collapse">
+                            <tr>
+                                <th style="border: 1px solid black; padding: 15px;">Nom du logement</th>
+                                <td style="border: 1px solid black; padding: 15px;">{{$accomodation}}</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid black; padding: 15px;">{{$case}}</th>
+                                <td style="border: 1px solid black; padding: 15px;">{{$otherPart}}</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid black; padding: 15px;">Date de visite</th>
+                                <td style="border: 1px solid black; padding: 15px;">{{$date}}</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid black; padding: 15px;">Adresse</th>
+                                <td style="border: 1px solid black; padding: 15px;">{{$address}}</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid black; padding: 15px;">Téléphone</th>
+                                <td style="border: 1px solid black; padding: 15px;">{{$mobile}}</td>
+                            </tr>
+                        </table>
                     </span></font>
                                             </div>
                                             <!-- padding --><div style="height: 40px; line-height: 40px;"> </div>
                                         </td></tr>
                                     <tr><td align="center">
                                             <div style="line-height: 24px; width: 50%" class='row'>
-
+                                                {{--<div class='col'><button style='width: 100%' class='btn btn-success'>Confirmer</button></div>--}}
+                                                {{--<div class='col'><button style='width: 100%' class='btn btn-danger'>Refuser</button></div>--}}
                                             </div>
                                             <!-- padding --><div style="height: 60px; line-height: 60px;"> </div>
                                         </td></tr>

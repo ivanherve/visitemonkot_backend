@@ -6,15 +6,7 @@
         <title>{{$headTitle}}</title>
         <script src="https://momentjs.com/downloads/moment-with-locales.min.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        <script>
-            moment.locale('fr');
-            var mainContent =
-                "<p>Cher/Chère {{$visiter}},</p>" +
-                "<p>Après votre visite à <i><u>{{$accomodation}}</u></i>, nous aimerions savoir ce logement vous plaît ?</p>";
-            $(document).ready(function(){
-                $("#main").html(mainContent);
-            });
-        </script>
+
     </head>
     <body>
     <div id="mailsub" class="notification" align="center">
@@ -63,7 +55,7 @@
                                                                                 <tr><td align="left" valign="top" class="mob_center">
                                                                                         <a href="#" target="_blank" style="color: #596167; font-family: Arial, Helvetica, sans-serif; font-size: 13px;">
                                                                                             <font face="Arial, Helvetica, sans-serif; font-size: 15px;" size="3" color="#fff">
-                                                                                                <div alt="Metronic" border="0" style="display: block;">visitemonkot.be</div></font></a>
+                                                                                                <div alt="Metronic" border="0" style="display: block; color: #fff">visitemonkot.be</div></font></a>
                                                                                     </td></tr>
                                                                             </table>
                                                                         </div>
@@ -95,15 +87,19 @@
                                             <div style="line-height: 24px;">
                                                 <font face="Arial, Helvetica, sans-serif" size="4" color="#57697e" style="font-size: 15px;">
                     <span id="main" style="font-family: Arial, Helvetica, sans-serif; font-size: 15px; color: #57697e;">
-
+                        <p>Cher/Chère {{$visiter}},</p>
+                        <p>Après votre visite à <i><u>{{$accomodation}}</u></i>, nous aimerions savoir ce logement vous plaît ?</p>
+                        <p>Nous vous invitons donc à consulter, <a href="https://visitemonkot.be">sur le site</a>, votre liste de visite dans l'onglet "Mes visites" afin d'indiquer si le logement vous intéresse </p>
+                        <p>Meilleurs salutation,</p>
+                        <p>L'équipe VisiteMonKot</p>
                     </span></font>
                                             </div>
                                             <!-- padding --><div style="height: 40px; line-height: 40px;"> </div>
                                         </td></tr>
                                     <tr><td align="center">
                                             <div style="line-height: 24px; width: 50%" class='row'>
-                                                <div class='col'><button style='width: 100%' class='btn btn-success'>Oui</button></div>
-                                                <div class='col'><button style='width: 100%' class='btn btn-danger'>Non</button></div>
+                                                {{--<div class='col'><button style='width: 100%' class='btn btn-success'>Oui</button></div>--}}
+                                                {{--<div class='col'><button style='width: 100%' class='btn btn-danger'>Non</button></div>--}}
                                             </div>
                                             <!-- padding --><div style="height: 60px; line-height: 60px;"> </div>
                                         </td></tr>
