@@ -229,14 +229,14 @@ class AccomodationController extends Controller
     public function editAd(Request $request)
     {
         $user = Auth::user(); if(!$user) return $this->errorRes(['Unauthorized.'],401);
-        $accId = $request->input('accId');
-        $title = $request->input('title');
-        $rent = $request->input('rent');
-        $charge = $request->input('charge');
+        $accId = $request->input('accId'); if(!$accId) return $this->errorRes(['De quel logement s\'agit-il ?'],404);
+        $title = $request->input('title'); if(!$title) return $this->errorRes(['Veuillez insérer un titre svp!'],404);
+        $rent = $request->input('rent'); if(!$rent) return $this->errorRes(['De combien est le loyer ?'],404);
+        $charge = $request->input('charge'); if(!$charge) return $this->errorRes(['De combien sont les charges ?'],404);
         $wifi = $request->input('hasWifi');
         $furnitures = $request->input('hasFurniture');
         $parking = $request->input('hasParking');
-        $description = $request->input('description');
+        $description = $request->input('description'); if(!$description) return $this->errorRes(["Pouvez-vous donner une description du logement svp !"],404);
         $cityName = $request->input('cityName'); if(!$cityName) return $this->errorRes(["Il n'y a pas de ville ici"],404);
         $address = $request->input('address'); if(!$address) return $this->errorRes(["Il n'y a pas d'adresse ici"],404);
 
@@ -256,6 +256,27 @@ class AccomodationController extends Controller
 
         $accomodation = DB::update("call update_accomodation($user->user_id, $accId, $cityId, ".'"'.$title.'"'.", $rent, $charge, $wifi, $furnitures, $parking, '$date', ".'"'.$description.'"'.", '$address');");
         if(!$accomodation) return $this->errorRes(['Aucune information n\'a été modifié'],404);
+
+        // Mail
+        $visits = DB::select("call get_all_approved_visit();");
+
+        foreach ($visits as $v){
+            if($v->accomodation_id == $accId) {
+                $subject = 'Modification de date de visite';
+                $email = 'he201342@students.ephec.be';//$v->email;
+                $data = [
+                    'headTitle' => $subject,
+                    'title' => 'Modification de date de visite',
+                    'visiter' => $v->visiter,
+                    'owner' => $v->owner,
+                    'accomodation' => $v->accomodation,
+                ];
+                Mail::send('email.visitIsEdited', $data, function($msg) use ($email, $subject) {
+                    $msg->to($email)->subject($subject);
+                });
+            }
+        }
+
         return $this->successRes($accomodation);
     }
 
@@ -515,11 +536,19 @@ class AccomodationController extends Controller
             $msg->to('he201342@students.ephec.be')->subject('Message de '.$name.' '.$surname);
         });
 
+        Mail::send('email.contact', $data, function ($msg) use ($name, $surname) {
+            $msg->to('ivanowe@hotmail.com')->subject('Message de '.$name.' '.$surname);
+        });
+
+        Mail::send('email.contact', $data, function ($msg) use ($name, $surname) {
+            $msg->to('ivanherve1411@gmail.com')->subject('Message de '.$name.' '.$surname);
+        });
+
         return $this->successRes('e-mail envoyé');
 
 //        return view('email.contact',$data);
     }
-
+/*
     public function visitIsConf()
     {
         $subject = 'Demande confirmé';
@@ -548,7 +577,7 @@ class AccomodationController extends Controller
 
         return view('email.visitIsComing', $data);
     }
-
+*/
     public function visitIsEdited()
     {
         $subject = 'Modification de date de visite';
@@ -565,21 +594,111 @@ class AccomodationController extends Controller
 
     public function feedbackVisit()
     {
-        $subject = 'Feedback de la visite';
+        // for loop on all visits, check date
+        date_default_timezone_set("Europe/Brussels");
+        $visits = DB::select("call get_all_approved_visit();");
+        $tab = [];
 
-        $data = [
-            'headTitle' => $subject,
-            'title' => 'Feedback de la visite',
-            'visiter' => 'Bob Visiteur',
-            'accomodation' => 'Studio avec piscine'
-        ];
+        foreach ($visits as $v){
+            if(date("Y-m-d H:i", strtotime("+2 Hours",strtotime($v->visitDate))) === date("Y-m-d H:i")){
+                array_push($tab,['Yes' => $v]);
+                $subject = 'Feedback de la visite';
 
-        return view('email.feedbackVisit',$data);
+                $email = 'he201342@students.ephec.be'; //$v->email;
+
+                $data = [
+                    'headTitle' => $subject,
+                    'title' => 'Feedback de la visite',
+                    'visiter' => $v->visiter,
+                    'accomodation' => $v->accomodation
+                ];
+
+                Mail::send('email.feedbackVisit', $data, function ($msg) use ($subject, $email) {
+                    $msg->to($email)->subject($subject);
+                });
+                //Log::info("");
+            }
+            //return $this->successRes('not sent');
+        }
+        return $this->successRes($tab);
     }
 
-    public function like_accomodation(Request $request)
-    {
+    public function remindVisit()
+    {/*
+        // for loop on all visits, check date
+        date_default_timezone_set("Europe/Brussels");
+        $visits = DB::select("call get_all_approved_visit();");
+        $tab = [];
 
+        foreach ($visits as $v){
+            if(date("Y-m-d H:i", strtotime("-6 Hours",strtotime($v->visitDate))) === date("Y-m-d H:i")){
+                array_push($tab,['Yes' => $v]);
+                //
+                $subject = 'Rappel de visite';
+                $emailVisiter = 'he201342@students.ephec.be'; // $v->email;
+                $emailOwner = 'he201342@students.ephec.be'; // $v->emailOwner;
+
+                $dataVisiter = [
+                    'case' => 'Annonceur',
+                    'accomodation' => $v->accomodation,
+                    'recipient' => $v->visiter,
+                    'title' => $subject,
+                    'headTitle' => $subject,
+                    'otherPart' => $v->owner,
+                    'date' => $v->visitDate,
+                    'address' => $v->address,
+                ];
+
+                $dataOwner = [
+                    'case' => 'Visiteur',
+                    'accomodation' => $v->accomodation,
+                    'recipient' => $v->owner,
+                    'title' => $subject,
+                    'headTitle' => $subject,
+                    'otherPart' => $v->visiter,
+                    'date' => $v->visitDate,
+                    'address' => $v->address,
+                ];
+
+                Mail::send('email.remindVisit', $dataVisiter, function ($msg) use ($emailVisiter, $subject) {
+                    $msg->to($emailVisiter)->subject($subject);
+                });
+
+                Mail::send('email.remindVisit', $dataOwner, function ($msg) use ($emailOwner, $subject) {
+                    $msg->to($emailOwner)->subject($subject);
+                });
+            }
+        }
+        return $this->successRes($tab);
+        $accomodations = Accomodation::all();
+        $tab = [];
+        foreach ($accomodations as $a) {
+            if($a->isStillFree == 0 && date("Y-m-d H:i", strtotime("+1 day",strtotime($a->updated_at))) === date("Y-m-d H:i")){
+                array_push($tab,$a->accomodation_id);
+//                DB::update("call hide_accomodation($a->accomodation_id)");
+            } else {
+                array_push($tab, [
+                    $a->accomodation_id => [
+                        date("Y-m-d H:i", strtotime("+1 day",strtotime($a->updated_at))),
+                        date("Y-m-d H:i")
+                    ]
+                ]);
+            }
+        };*/
+        $users = User::all()->first();
+        return $this->successRes($users);
+    }
+
+    public function likeAccomodation(Request $request)
+    {
+        $visiter = Auth::user(); if(!$visiter) return $this->errorRes(["Unauthorized."],401);
+        $uid = $visiter->user_id;
+        $aid = $request->input("aid"); if(!$aid) return $this->errorRes(["De quel logement s'agit-il ?"],404);
+        $accomodation = Accomodation::all()->where('accomodation_id','=',$aid)->first(); if(!$accomodation) return $this->errorRes(["Ce logement n'existe pas"],404);
+
+        DB::insert("call like_accomodation($uid,$aid)");
+
+        return $this->successRes("Merci pour votre feedback");
     }
 
 }
