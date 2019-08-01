@@ -55,4 +55,9 @@ class AdminController extends Controller
 
         return $this->successRes("$user->Firstname $user->Surname est déconnecté");
     }
+
+    public function editUser(Request $request)
+    {
+        
+    }
 }
