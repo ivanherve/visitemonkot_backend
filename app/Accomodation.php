@@ -42,6 +42,7 @@ class Accomodation extends Model
         'TypeAccomodation_typeAcc_id',
         'BeginingVisit',
         'EndVisit',
-        'addressVisible'
+        'addressVisible',
+        'updated_at'
     ];
 }
