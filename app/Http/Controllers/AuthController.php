@@ -96,8 +96,10 @@ class AuthController extends Controller
         $surname = $request->input('surname'); if(!$surname) $this->errorRes(['Quelle est votre Nom ?',$surname],404);
         $email = $request->input('email'); if(!$email) $this->errorRes(['Quelle est votre adresse e-mail ?',$email],404);
         $password = $request->input('password'); if(!$password) $this->errorRes(['Insérer un mot de passe svp ?',$password],404);
+        $mobile = $request->input('mobile'); if(!$mobile) $this->errorRes(['Insérer un numéro de téléphone svp, pour que nous puissions le faire communiquer à ceux avec qui vous ferez une visite',$password],404);
+        $callCode = $request->input('callCode'); if(!$callCode) $this->errorRes(['De quel indicatif téléphonique s\'agit-il ?',$callCode],404);
 
-        $createUser = DB::insert("call create_user('$firstname', '$surname', '$email', '$password');"); if(!$createUser) return $this->errorRes('Une erreur s\'est produite durant votre inscription',500);
+        $createUser = DB::insert("call create_user('$firstname', '$surname', '$email', '$password', '$mobile', '$callCode');"); if(!$createUser) return $this->errorRes('Une erreur s\'est produite durant votre inscription',500);
 
         $user = DB::select("call log_in('$email','$password');");
 
