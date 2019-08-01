@@ -2,6 +2,9 @@
 
 namespace App\Console;
 
+use App\Console\Commands\FeedbackVisit;
+use App\Console\Commands\HideAccomodation;
+use App\Console\Commands\RemindVisit;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 
@@ -13,7 +16,9 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        FeedbackVisit::class,
+        RemindVisit::class,
+        HideAccomodation::class,
     ];
 
     /**
@@ -24,6 +29,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->command('command:feedback')->everyMinute() ;
+        $schedule->command('command:remind')->everyMinute() ;
+        $schedule->command('command:hide')->everyMinute() ;
     }
 }
